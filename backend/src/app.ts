@@ -24,6 +24,21 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// Root endpoint
+app.get("/", (_req, res) => {
+  return res.json({ 
+    message: "Hacknroll Backend API", 
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      debug: "/debug",
+      auth: "/api/auth",
+      groups: "/api/groups",
+      games: "/api/groups/:groupId/[game]"
+    }
+  });
+});
+
 // Health check endpoint (doesn't require database)
 app.get("/health", (_req, res) => {
   try {
