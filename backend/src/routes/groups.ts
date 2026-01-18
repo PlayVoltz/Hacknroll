@@ -105,6 +105,73 @@ router.get("/", async (req, res) => {
   );
 });
 
+router.post("/:groupId/leave", async (req, res) => {
+  const groupId = req.params.groupId;
+  const userId = (req as AuthedRequest).userId;
+
+  const membership = await prisma.groupMember.findUnique({
+    where: { groupId_userId: { groupId, userId } },
+  });
+  if (!membership) {
+    return res.status(404).json({ error: "Not a member" });
+  }
+
+  // If admin, ensure there is another admin before leaving
+  if (membership.role === "ADMIN") {
+    const otherAdmins = await prisma.groupMember.count({
+      where: { groupId, role: "ADMIN", NOT: { userId } },
+    });
+    if (otherAdmins === 0) {
+      return res.status(400).json({
+        error: "You are the last admin. Delete the group instead of leaving.",
+      });
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.groupMember.delete({
+      where: { groupId_userId: { groupId, userId } },
+    });
+    await tx.wallet.deleteMany({
+      where: { groupId, userId },
+    });
+  });
+
+  return res.json({ ok: true });
+});
+
+router.delete("/:groupId", async (req, res) => {
+  const groupId = req.params.groupId;
+  const userId = (req as AuthedRequest).userId;
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group) return res.status(404).json({ error: "Group not found" });
+
+  const membership = await prisma.groupMember.findUnique({
+    where: { groupId_userId: { groupId, userId } },
+  });
+  if (!membership) return res.status(403).json({ error: "Not a member" });
+
+  // Only the creator can delete (fallback: allow admin if createdByUserId missing)
+  const isCreator = !!group.createdByUserId && group.createdByUserId === userId;
+  const canDelete = isCreator || (!group.createdByUserId && membership.role === "ADMIN");
+  if (!canDelete) {
+    return res.status(403).json({ error: "Only the group creator can delete this group" });
+  }
+
+  // Delete all group data in a transaction (order matters for FK constraints)
+  await prisma.$transaction(async (tx) => {
+    await tx.gameBet.deleteMany({ where: { round: { groupId } } });
+    await tx.gameRound.deleteMany({ where: { groupId } });
+    await tx.transaction.deleteMany({ where: { groupId } });
+    await tx.wallet.deleteMany({ where: { groupId } });
+    await tx.groupMember.deleteMany({ where: { groupId } });
+    await tx.group.delete({ where: { id: groupId } });
+  });
+
+  return res.json({ ok: true });
+});
+
 router.get("/:groupId/leaderboard", async (req, res) => {
   const groupId = req.params.groupId;
   const userId = (req as AuthedRequest).userId;

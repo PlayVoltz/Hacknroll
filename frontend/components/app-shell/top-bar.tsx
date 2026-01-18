@@ -5,13 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { apiFetch } from "../../lib/api";
 import { useAuth } from "../auth/AuthProvider";
-import { Coins, Users, Copy, Check, ChevronDown, LogOut, Plus } from "lucide-react";
+import { Coins, Users, Copy, Check, LogOut, Plus, Home, Trash2, LogOutIcon } from "lucide-react";
 import { formatCredits } from "../../lib/credits";
+import { normalizeNumberInput } from "../../lib/inputs";
 
 type Group = {
   id: string;
   name: string;
   inviteCode: string;
+  createdByUserId?: string | null;
 };
 
 type UserStats = {
@@ -28,7 +30,13 @@ export function TopBar() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showJoinGroup, setShowJoinGroup] = useState(false);
+  const [showLeaveGroup, setShowLeaveGroup] = useState(false);
+  const [showDeleteGroup, setShowDeleteGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [createDurationDays, setCreateDurationDays] = useState<number | null>(0);
+  const [createDurationHours, setCreateDurationHours] = useState<number | null>(1);
+  const [createDurationMinutes, setCreateDurationMinutes] = useState<number | null>(0);
+  const [createIsUnlimited, setCreateIsUnlimited] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -85,13 +93,17 @@ export function TopBar() {
       method: "POST",
       body: JSON.stringify({
         name: newGroupName.trim(),
-        durationDays: 0,
-        durationHours: 1,
-        durationMinutes: 0,
-        isUnlimited: false,
+        durationDays: createDurationDays ?? 0,
+        durationHours: createDurationHours ?? 0,
+        durationMinutes: createDurationMinutes ?? 0,
+        isUnlimited: createIsUnlimited,
       }),
     });
     setNewGroupName("");
+    setCreateDurationDays(0);
+    setCreateDurationHours(1);
+    setCreateDurationMinutes(0);
+    setCreateIsUnlimited(false);
     setShowCreateGroup(false);
     await loadGroups();
     router.push(`/groups/${created.id}`);
@@ -108,31 +120,89 @@ export function TopBar() {
     await loadGroups();
   }
 
+  async function leaveGroup() {
+    if (!groupId) return;
+    await apiFetch(`/api/groups/${groupId}/leave`, { method: "POST" });
+    setShowLeaveGroup(false);
+    await loadGroups();
+    router.push("/");
+  }
+
+  async function deleteGroup() {
+    if (!groupId) return;
+    await apiFetch(`/api/groups/${groupId}`, { method: "DELETE" });
+    setShowDeleteGroup(false);
+    await loadGroups();
+    router.push("/");
+  }
+
+  const isCreator =
+    !!me && !!activeGroup && !!activeGroup.createdByUserId && activeGroup.createdByUserId === me.id;
+
   return (
     <header className="h-16 border-b border-border bg-surface flex items-center justify-between px-4 gap-4">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-2">
-          <Users className="h-4 w-4 text-neon-lime" />
-          <select
-            className="bg-transparent text-foreground text-sm outline-none max-w-[180px]"
-            value={activeGroup?.id ?? ""}
-            disabled={!me}
-            onChange={(e) => {
-              const next = e.target.value;
-              if (next) router.push(`/groups/${next}`);
-            }}
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-border bg-surface-elevated text-foreground"
+          onClick={() => router.push("/")}
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+
+        {me && activeGroup ? (
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-2">
+              <Users className="h-4 w-4 text-neon-lime" />
+              <span className="max-w-[220px] truncate text-sm font-semibold text-foreground">
+                {activeGroup.name}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {activeGroup ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={copyInviteCode}
+            className="text-muted-foreground hover:text-foreground gap-1.5"
           >
-            <option value="" disabled>
-              {me ? "Select Group" : "Login to play"}
-            </option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </div>
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-neon-lime" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
+            <span className="text-xs font-mono">{activeGroup.inviteCode}</span>
+          </Button>
+        ) : null}
+
+        {me && activeGroup ? (
+          <div className="hidden sm:flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border bg-transparent text-muted-foreground hover:text-foreground"
+              onClick={() => setShowLeaveGroup(true)}
+            >
+              <LogOutIcon className="h-4 w-4 mr-2" />
+              Leave
+            </Button>
+            {isCreator ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-magenta/40 bg-transparent text-magenta hover:bg-magenta/10"
+                onClick={() => setShowDeleteGroup(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
 
         {me ? (
           <div className="hidden sm:flex items-center gap-2">
@@ -155,22 +225,6 @@ export function TopBar() {
               Join
             </Button>
           </div>
-        ) : null}
-
-        {activeGroup ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={copyInviteCode}
-            className="text-muted-foreground hover:text-foreground gap-1.5"
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-neon-lime" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-            <span className="text-xs font-mono">{activeGroup.inviteCode}</span>
-          </Button>
         ) : null}
       </div>
 
@@ -275,6 +329,49 @@ export function TopBar() {
                   onChange={(e) => setNewGroupName(e.target.value)}
                 />
               </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 placeholder:text-muted-foreground"
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={createDurationDays ?? ""}
+                  onChange={(e) => setCreateDurationDays(normalizeNumberInput(e.target.value))}
+                  placeholder="Days"
+                  disabled={createIsUnlimited}
+                />
+                <input
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 placeholder:text-muted-foreground"
+                  type="number"
+                  min={0}
+                  max={23}
+                  value={createDurationHours ?? ""}
+                  onChange={(e) => setCreateDurationHours(normalizeNumberInput(e.target.value))}
+                  placeholder="Hours"
+                  disabled={createIsUnlimited}
+                />
+                <input
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 placeholder:text-muted-foreground"
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={createDurationMinutes ?? ""}
+                  onChange={(e) => setCreateDurationMinutes(normalizeNumberInput(e.target.value))}
+                  placeholder="Minutes"
+                  disabled={createIsUnlimited}
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={createIsUnlimited}
+                  onChange={(e) => setCreateIsUnlimited(e.target.checked)}
+                />
+                Unlimited duration
+              </label>
+
               <Button className="w-full bg-neon-lime text-background hover:bg-neon-lime/90">
                 Create Group
               </Button>
@@ -330,6 +427,84 @@ export function TopBar() {
                 Join Group
               </Button>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {showLeaveGroup ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setShowLeaveGroup(false)}
+            role="button"
+            aria-label="Close"
+          />
+          <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface p-6 neon-glow">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold">Leave group?</h2>
+                <p className="text-sm text-muted-foreground">
+                  You can rejoin later with the invite code.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowLeaveGroup(false)}>
+                Close
+              </Button>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowLeaveGroup(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => void leaveGroup()}
+              >
+                Leave
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showDeleteGroup ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setShowDeleteGroup(false)}
+            role="button"
+            aria-label="Close"
+          />
+          <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface p-6 neon-glow">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold">Delete group?</h2>
+                <p className="text-sm text-muted-foreground">
+                  This permanently deletes the group, wallets, rounds, and history.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowDeleteGroup(false)}>
+                Close
+              </Button>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowDeleteGroup(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 border border-magenta/40 bg-magenta/10 text-magenta hover:bg-magenta/20"
+                onClick={() => void deleteGroup()}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}

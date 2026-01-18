@@ -194,21 +194,6 @@ export default function GroupLobbyPage() {
             Don&apos;t be the brokest.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/groups/${groupId}/games`}
-            className="rounded-md border border-border px-3 py-2 hover:bg-surface-elevated"
-          >
-            Games
-          </Link>
-          <Link
-            href="/"
-            className="rounded-md border border-border px-3 py-2 hover:bg-surface-elevated"
-          >
-            Home
-          </Link>
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

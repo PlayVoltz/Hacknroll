@@ -9,7 +9,7 @@ import { useAuth } from "../components/auth/AuthProvider";
 import { DarePotFrame } from "../components/ui/darepot-frame";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Clock, Gamepad2, Plus, Sparkles, UserPlus, Users } from "lucide-react";
+import { Clock, Gamepad2, Plus, UserPlus, Users } from "lucide-react";
 
 export default function HomePage() {
   const { me, loading } = useAuth();
@@ -382,11 +382,6 @@ function AuthedHome() {
             <h2 className="text-2xl font-bold text-foreground">
               Featured games
             </h2>
-            <p className="text-muted-foreground">
-              {firstGroupId
-                ? "These will open in your first group. You can switch groups in the top bar."
-                : "Create or join a group first to play."}
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
@@ -424,10 +419,6 @@ function AuthedHome() {
                 </Link>
               );
             })}
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-lg border border-neon-lime/20 bg-neon-lime/10 px-3 py-2 text-sm text-neon-lime">
-            <Sparkles className="h-4 w-4" />
-            Tip: use the top bar to jump straight into a specific group.
           </div>
         </section>
       </main>
