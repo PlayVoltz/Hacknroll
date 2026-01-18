@@ -294,7 +294,7 @@ router.post("/:groupId/transfer", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const fromUserId = (req as AuthedRequest).userId;
+  const fromUserId = (req as unknown as AuthedRequest).userId;
   const { toUsername, amountMinor } = parsed.data;
 
   const group = await prisma.group.findUnique({ where: { id: groupId } });

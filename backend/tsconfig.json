@@ -10,7 +10,12 @@
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strictNullChecks": false
   },
-  "include": ["src", "prisma"]
+  "include": ["src", "prisma"],
+  "exclude": ["node_modules", "dist"]
 }
