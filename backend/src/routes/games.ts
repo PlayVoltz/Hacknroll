@@ -120,7 +120,7 @@ router.post("/:groupId/coinflip/play", async (req, res) => {
   const { result, won, payoutMinor } = playCoinflipEngine(choice, betMinor);
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId,
@@ -174,7 +174,7 @@ router.post("/:groupId/blackjack/play", async (req, res) => {
   const result = playBlackjackEngine(betMinor);
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId,
@@ -234,7 +234,7 @@ router.post("/:groupId/blackjack/bet", async (req, res) => {
 
   const { amountMinor, roundKey } = parsed.data;
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId,
@@ -279,7 +279,7 @@ router.post("/:groupId/blackjack/settle", async (req, res) => {
 
   const { payoutMinor, roundKey, outcome, meta } = parsed.data;
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId,
@@ -561,7 +561,7 @@ router.post("/:groupId/plinko/play", async (req, res) => {
   });
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId,
@@ -651,7 +651,7 @@ router.post("/:groupId/poker/create", async (req, res) => {
   };
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const created = await tx.gameRound.create({
         data: {
           groupId,
@@ -759,7 +759,7 @@ router.post("/:groupId/poker/join", async (req, res) => {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.gameRound.update({
         where: { id: round.id },
         data: { result: nextState },
@@ -898,7 +898,7 @@ router.post("/:groupId/poker/action", async (req, res) => {
   });
 
   if (state.status === "SHOWDOWN" && winnerId) {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId: winnerId,

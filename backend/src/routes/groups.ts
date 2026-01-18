@@ -128,7 +128,7 @@ router.post("/:groupId/leave", async (req, res) => {
     }
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     await tx.groupMember.delete({
       where: { groupId_userId: { groupId, userId } },
     });
@@ -160,7 +160,7 @@ router.delete("/:groupId", async (req, res) => {
   }
 
   // Delete all group data in a transaction (order matters for FK constraints)
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     await tx.gameBet.deleteMany({ where: { round: { groupId } } });
     await tx.gameRound.deleteMany({ where: { groupId } });
     await tx.transaction.deleteMany({ where: { groupId } });
@@ -328,7 +328,7 @@ router.post("/:groupId/transfer", async (req, res) => {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await applyLedgerEntry(tx, {
         groupId,
         userId: fromUserId,
@@ -386,7 +386,7 @@ router.delete("/:groupId/members/:memberUserId", async (req, res) => {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.wallet.deleteMany({
         where: { groupId, userId: memberUserId },
       });
@@ -415,7 +415,7 @@ router.delete("/:groupId", async (req, res) => {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.gameBet.deleteMany({ where: { round: { groupId } } });
       await tx.gameRound.deleteMany({ where: { groupId } });
       await tx.transaction.deleteMany({ where: { groupId } });

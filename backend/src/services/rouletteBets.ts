@@ -39,7 +39,7 @@ export async function placeRouletteBet(input: {
 
   const bet: RouletteBet = { betType, selection: null };
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     const existing = await tx.gameBet.findFirst({
       where: { roundId: currentRound.id, userId },
     });
