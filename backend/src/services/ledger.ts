@@ -10,7 +10,7 @@ export type LedgerEntryInput = {
   meta: any;
 };
 
-type LedgerClient = Prisma.TransactionClient | PrismaClient;
+type LedgerClient = any;
 
 export async function applyLedgerEntry(
   tx: LedgerClient,
