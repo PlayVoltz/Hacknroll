@@ -58,13 +58,25 @@ function allPlayersMatched(players: PokerPlayerState[], currentBetMinor: number)
 
 function advancePhase(state: PokerState) {
   if (state.status === "PREFLOP") {
-    state.community.push(drawEngine(state.deck), drawEngine(state.deck), drawEngine(state.deck));
+    const draw1 = drawEngine(state.deck);
+    state.deck = draw1.deck;
+    state.community.push(draw1.card);
+    const draw2 = drawEngine(state.deck);
+    state.deck = draw2.deck;
+    state.community.push(draw2.card);
+    const draw3 = drawEngine(state.deck);
+    state.deck = draw3.deck;
+    state.community.push(draw3.card);
     state.status = "FLOP";
   } else if (state.status === "FLOP") {
-    state.community.push(drawEngine(state.deck));
+    const draw = drawEngine(state.deck);
+    state.deck = draw.deck;
+    state.community.push(draw.card);
     state.status = "TURN";
   } else if (state.status === "TURN") {
-    state.community.push(drawEngine(state.deck));
+    const draw = drawEngine(state.deck);
+    state.deck = draw.deck;
+    state.community.push(draw.card);
     state.status = "RIVER";
   } else if (state.status === "RIVER") {
     state.status = "SHOWDOWN";

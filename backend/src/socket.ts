@@ -11,13 +11,16 @@ export function initSocket(_server: any) {
 }
 
 export function getSocketServer() {
-  // Return a mock object that won't crash
-  return {
-    to: () => ({
-      emit: () => {},
+  // Return a mock object that won't crash and supports chaining
+  // Accepts any arguments for emit() to match Socket.IO API
+  const mockEmit = (..._args: any[]) => mockSocket;
+  const mockSocket: any = {
+    to: (_room: string) => ({
+      emit: mockEmit,
     }),
-    emit: () => {},
+    emit: mockEmit,
   };
+  return mockSocket;
 }
 
 export async function broadcastGroupState(_groupId: string) {

@@ -54,7 +54,10 @@ export function drawEngine(deck: PokerCard[]): DrawResult {
     }
   }
 
-  return { card: drawTs(deck), deck };
+  const drawnCard = drawTs(deck);
+  // Remove the drawn card from the deck
+  const newDeck = deck.filter((card) => card !== drawnCard);
+  return { card: drawnCard, deck: newDeck };
 }
 
 export function pickWinnerEngine(contenders: string[]): string {
