@@ -10,6 +10,11 @@ import { getDiag } from "./services/engine/diag";
 
 const app = express();
 
+// Error handler for async routes
+const asyncHandler = (fn: any) => (req: any, res: any, next: any) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 app.use(
   cors({
     origin: config.clientOrigin,
@@ -19,12 +24,35 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check endpoint (doesn't require database)
 app.get("/health", (_req, res) => {
-  const diag = getDiag();
-  return res.json(diag ? { ok: true, diag } : { ok: true });
+  try {
+    const diag = getDiag();
+    return res.json(diag ? { ok: true, diag } : { ok: true });
+  } catch (error) {
+    return res.status(500).json({ 
+      ok: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+  }
 });
+
 app.use("/api/auth", authRoutes);
 app.use("/api/groups", requireAuth, groupRoutes);
 app.use("/api/groups", requireAuth, gameRoutes);
+
+// Global error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal server error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+
+// 404 handler
+app.use((req: any, res: any) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 export default app;
