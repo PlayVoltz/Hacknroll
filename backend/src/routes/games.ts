@@ -3,25 +3,15 @@ import { z } from "zod";
 import prisma from "../db";
 import { AuthedRequest } from "../middleware/auth";
 import { applyLedgerEntry } from "../services/ledger";
-import { playCoinflip } from "../services/games/coinflip";
-import { playBlackjack } from "../services/games/blackjack";
-import {
-  cashOut,
-  generateMines,
-  MinesState,
-  revealTile,
-} from "../services/games/mines";
-import {
-  resolveRouletteBet,
-  RouletteBet,
-  spinRoulette,
-} from "../services/games/roulette";
-import { settlePlinko } from "../services/games/plinko";
-import {
-  buildDeck,
-  draw,
-  PokerCard,
-} from "../services/games/poker";
+import { playCoinflipEngine } from "../services/engine/coinflip";
+import { playBlackjackEngine } from "../services/engine/blackjack";
+import { MinesState } from "../services/games/mines";
+import { cashOutEngine, generateMinesEngine, revealTileEngine } from "../services/engine/mines";
+import { resolveRouletteBet, RouletteBet } from "../services/games/roulette";
+import { spinRouletteEngine } from "../services/engine/roulette";
+import { settlePlinkoEngine } from "../services/engine/plinko";
+import { type PokerCard } from "../services/games/poker";
+import { buildDeckEngine, drawEngine, pickWinnerEngine } from "../services/engine/poker";
 import { config } from "../config";
 import { broadcastGroupState, getSocketServer } from "../socket";
 import { placeRouletteBet } from "../services/rouletteBets";
@@ -126,7 +116,7 @@ router.post("/:groupId/coinflip/play", async (req, res) => {
   }
 
   const { betMinor, choice } = parsed.data;
-  const { result, won, payoutMinor } = playCoinflip(choice, betMinor);
+  const { result, won, payoutMinor } = playCoinflipEngine(choice, betMinor);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -180,7 +170,7 @@ router.post("/:groupId/blackjack/play", async (req, res) => {
   }
 
   const { betMinor } = parsed.data;
-  const result = playBlackjack(betMinor);
+  const result = playBlackjackEngine(betMinor);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -347,7 +337,7 @@ router.post("/:groupId/mines/start", async (req, res) => {
   }
 
   const { betMinor, mineCount } = parsed.data;
-  const minePositions = generateMines(mineCount);
+  const minePositions = generateMinesEngine(mineCount);
   const state: MinesState = {
     betMinor,
     mineCount,
@@ -442,7 +432,7 @@ router.post("/:groupId/mines/reveal", async (req, res) => {
   }
 
   const state = round.result as MinesState;
-  const nextState = revealTile(state, parsed.data.position);
+  const nextState = revealTileEngine(state, parsed.data.position);
 
   const update: Partial<MinesState> = {
     revealed: nextState.revealed,
@@ -508,7 +498,7 @@ router.post("/:groupId/mines/cashout", async (req, res) => {
   }
 
   const state = round.result as MinesState;
-  const { state: nextState, payoutMinor } = cashOut(state);
+  const { state: nextState, payoutMinor } = cashOutEngine(state);
 
   await prisma.$transaction(async (tx) => {
     await tx.gameRound.update({
@@ -562,7 +552,7 @@ router.post("/:groupId/plinko/play", async (req, res) => {
   }
 
   const { betMinor, rows, risk, slotIndex } = parsed.data;
-  const { multiplier, payoutMinor } = settlePlinko({ betMinor, rows, risk, slotIndex });
+  const { multiplier, payoutMinor } = settlePlinkoEngine({ betMinor, rows, risk, slotIndex });
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -746,11 +736,17 @@ router.post("/:groupId/poker/join", async (req, res) => {
   };
 
   if (nextState.status === "WAITING" && nextState.players.length >= 2) {
-    nextState.deck = buildDeck();
-    nextState.players = nextState.players.map((player) => ({
-      ...player,
-      hand: [draw(nextState.deck), draw(nextState.deck)],
-    }));
+    nextState.deck = buildDeckEngine();
+    nextState.players = nextState.players.map((player) => {
+      const first = drawEngine(nextState.deck);
+      nextState.deck = first.deck;
+      const second = drawEngine(nextState.deck);
+      nextState.deck = second.deck;
+      return {
+        ...player,
+        hand: [first.card, second.card],
+      };
+    });
     nextState.status = "PREFLOP";
     nextState.currentPlayerIndex = 0;
     nextState.currentBetMinor = 0;
@@ -885,7 +881,8 @@ router.post("/:groupId/poker/action", async (req, res) => {
   let winnerId: string | undefined;
   if (state.status === "SHOWDOWN") {
     const contenders = state.players.filter((p) => !p.folded);
-    winnerId = contenders[Math.floor(Math.random() * contenders.length)]?.userId;
+    const contenderIds = contenders.map((p) => p.userId);
+    winnerId = pickWinnerEngine(contenderIds);
     state.winnerId = winnerId;
   }
 
@@ -1022,7 +1019,7 @@ export async function finalizeRouletteRound(roundId: string) {
     return;
   }
 
-  const result = spinRoulette();
+  const result = spinRouletteEngine();
   const bets = await prisma.gameBet.findMany({
     where: { roundId },
   });
