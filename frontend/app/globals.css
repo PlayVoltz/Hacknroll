@@ -1,0 +1,318 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* DarePot-inspired neon + glass theme (ported from zip) */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --surface: #0c0f11;
+  --surface-elevated: #211e21;
+  --card: #0c0f11;
+  --card-foreground: #ffffff;
+  --popover: #211e21;
+  --popover-foreground: #ffffff;
+  --primary: #38f868;
+  --primary-foreground: #000000;
+  --secondary: #423941;
+  --secondary-foreground: #ffffff;
+  --muted: #778184;
+  --muted-foreground: #9da6a3;
+  --accent: #423941;
+  --accent-foreground: #ffffff;
+  --destructive: #e04890;
+  --destructive-foreground: #ffffff;
+  --border: #423941;
+  --input: #211e21;
+  --ring: #38f868;
+
+  --neon-lime: #38f868;
+  --magenta: #e04890;
+  --purple: #b81098;
+  --cyan: #48b0e8;
+  --yellow: #f8c840;
+
+  --radius: 1rem;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+@keyframes coinFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(720deg);
+  }
+}
+
+.coin {
+  @apply h-24 w-24 rounded-full border-4 border-amber-300 bg-amber-400 text-center text-2xl font-bold text-black shadow-lg;
+  line-height: 5.5rem;
+}
+
+.coin.flip {
+  animation: coinFlip 1s ease-in-out;
+}
+
+.roulette-wheel {
+  @apply relative mx-auto h-64 w-64 rounded-full border-4 border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900;
+  transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.roulette-wheel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    #10b981 0deg 9.73deg,
+    #ef4444 9.73deg 19.46deg,
+    #111827 19.46deg 29.19deg,
+    #ef4444 29.19deg 38.92deg,
+    #111827 38.92deg 48.65deg,
+    #ef4444 48.65deg 58.38deg,
+    #111827 58.38deg 68.11deg,
+    #ef4444 68.11deg 77.84deg,
+    #111827 77.84deg 87.57deg,
+    #ef4444 87.57deg 97.3deg,
+    #111827 97.3deg 107.03deg,
+    #ef4444 107.03deg 116.76deg,
+    #111827 116.76deg 126.49deg,
+    #ef4444 126.49deg 136.22deg,
+    #111827 136.22deg 145.95deg,
+    #ef4444 145.95deg 155.68deg,
+    #111827 155.68deg 165.41deg,
+    #ef4444 165.41deg 175.14deg,
+    #111827 175.14deg 184.87deg,
+    #ef4444 184.87deg 194.6deg,
+    #111827 194.6deg 204.33deg,
+    #ef4444 204.33deg 214.06deg,
+    #111827 214.06deg 223.79deg,
+    #ef4444 223.79deg 233.52deg,
+    #111827 233.52deg 243.25deg,
+    #ef4444 243.25deg 252.98deg,
+    #111827 252.98deg 262.71deg,
+    #ef4444 262.71deg 272.44deg,
+    #111827 272.44deg 282.17deg,
+    #ef4444 282.17deg 291.9deg,
+    #111827 291.9deg 301.63deg,
+    #ef4444 301.63deg 311.36deg,
+    #111827 311.36deg 321.09deg,
+    #ef4444 321.09deg 330.82deg,
+    #111827 330.82deg 340.55deg,
+    #ef4444 340.55deg 350.28deg,
+    #111827 350.28deg 360deg
+  );
+  opacity: 0.95;
+}
+
+.roulette-pointer {
+  @apply mx-auto -mt-2 h-0 w-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-amber-400;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Blackjack (zip 8) animations + helpers */
+@keyframes deal-card {
+  0% {
+    transform: translateX(200px) translateY(-100px) rotate(15deg) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flip-card {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--neon-lime), 0 0 10px var(--neon-lime);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--neon-lime), 0 0 25px var(--neon-lime);
+  }
+}
+
+@keyframes count-up {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-overlay {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chip-grow {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-deal {
+  animation: deal-card 0.3s ease-out forwards;
+}
+
+.animate-flip {
+  animation: flip-card 0.4s ease-in-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-count-up {
+  animation: count-up 0.3s ease-out;
+}
+
+.animate-slide-in-overlay {
+  animation: slide-in-overlay 0.3s ease-out forwards;
+}
+
+.animate-chip-grow {
+  animation: chip-grow 0.3s ease-out;
+}
+
+.pastel-glass {
+  background: linear-gradient(90deg, #c6d8f0 0%, #cbe4ce 55%, #cde7c6 100%);
+}
+
+.table-felt {
+  background: linear-gradient(180deg, rgba(20, 40, 30, 0.4) 0%, rgba(15, 30, 20, 0.3) 100%);
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-neon-lime via-cyan to-neon-lime bg-clip-text text-transparent;
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      90deg,
+      rgba(198, 216, 240, 0.1) 0%,
+      rgba(203, 228, 206, 0.1) 55%,
+      rgba(205, 231, 198, 0.1) 100%
+    );
+    backdrop-filter: blur(8px);
+  }
+
+.glass-card-glow {
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    0 0 40px -10px rgba(74, 222, 128, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.noise-bg {
+  position: relative;
+}
+
+.noise-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+  .neon-glow {
+    box-shadow:
+      0 0 20px rgba(56, 248, 104, 0.3),
+      0 0 40px rgba(56, 248, 104, 0.1);
+  }
+
+  .neon-glow-hover:hover {
+    box-shadow:
+      0 0 20px rgba(56, 248, 104, 0.4),
+      0 0 40px rgba(56, 248, 104, 0.2);
+  }
+
+  @keyframes tile-flip {
+    0% {
+      transform: rotateY(0deg) scale(1);
+    }
+    50% {
+      transform: rotateY(90deg) scale(0.96);
+    }
+    100% {
+      transform: rotateY(180deg) scale(1);
+    }
+  }
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-3px);
+    }
+    40% {
+      transform: translateX(3px);
+    }
+    60% {
+      transform: translateX(-2px);
+    }
+    80% {
+      transform: translateX(2px);
+    }
+  }
+
+  .animate-tile-flip {
+    animation: tile-flip 420ms ease-in-out;
+    transform-style: preserve-3d;
+  }
+
+  .animate-shake {
+    animation: shake 420ms ease-in-out;
+  }
+}

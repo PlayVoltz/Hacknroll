@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupStatus {
+  ACTIVE
+  FROZEN
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum TransactionType {
+  BET
+  PAYOUT
+  TRANSFER
+  GAME_RESULT
+}
+
+enum GameType {
+  COINFLIP
+  BLACKJACK
+  MINES
+  PLINKO
+  POKER
+  ROULETTE
+}
+
+enum RoundStatus {
+  ACTIVE
+  FINISHED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  username     String        @unique
+  passwordHash String
+  profileImageUrl String?
+  createdAt    DateTime      @default(now())
+  memberships  GroupMember[]
+  wallets      Wallet[]
+  transactions Transaction[]
+  bets         GameBet[]
+  rounds       GameRound[]   @relation("RoundsByUser")
+}
+
+model Group {
+  id              String        @id @default(cuid())
+  name            String
+  inviteCode      String        @unique
+  createdByUserId String?
+  durationDays    Int           @default(0)
+  durationHours   Int           @default(0)
+  durationMinutes Int           @default(0)
+  isUnlimited     Boolean       @default(false)
+  status          GroupStatus   @default(ACTIVE)
+  startsAt        DateTime      @default(now())
+  endsAt          DateTime?
+  createdAt       DateTime      @default(now())
+  members         GroupMember[]
+  wallets         Wallet[]
+  transactions    Transaction[]
+  rounds          GameRound[]
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model Wallet {
+  id           String   @id @default(cuid())
+  groupId      String
+  userId       String
+  creditsMinor Int
+  createdAt    DateTime @default(now())
+  group        Group    @relation(fields: [groupId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model Transaction {
+  id            String           @id @default(cuid())
+  groupId       String
+  userId        String
+  relatedUserId String?
+  type          TransactionType
+  amountMinor   Int
+  meta          Json
+  createdAt     DateTime         @default(now())
+  group         Group            @relation(fields: [groupId], references: [id])
+  user          User             @relation(fields: [userId], references: [id])
+
+  @@index([groupId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model GameRound {
+  id         String      @id @default(cuid())
+  groupId    String
+  userId     String?
+  gameType   GameType
+  status     RoundStatus @default(ACTIVE)
+  seed       String
+  result     Json?
+  createdAt  DateTime    @default(now())
+  finishedAt DateTime?
+  group      Group       @relation(fields: [groupId], references: [id])
+  user       User?       @relation("RoundsByUser", fields: [userId], references: [id])
+  bets       GameBet[]
+
+  @@index([groupId])
+  @@index([gameType])
+}
+
+model GameBet {
+  id          String   @id @default(cuid())
+  roundId     String
+  userId      String
+  amountMinor Int
+  selection   Json
+  payoutMinor Int
+  createdAt   DateTime @default(now())
+  round       GameRound @relation(fields: [roundId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([roundId])
+  @@index([userId])
+}
