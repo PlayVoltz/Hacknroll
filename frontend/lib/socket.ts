@@ -9,7 +9,8 @@ export function getSocket() {
   // Frontend should be updated to use polling endpoints instead
   if (!socket) {
     try {
-      socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000", {
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000") as string;
+      socket = io(apiUrl, {
         withCredentials: true,
         transports: ["polling"], // Force polling instead of websocket
         reconnection: false, // Don't try to reconnect
@@ -19,7 +20,7 @@ export function getSocket() {
       // Suppress connection errors
       socket.on("connect_error", () => {});
       socket.on("disconnect", () => {});
-    } catch (error) {
+    } catch (error: any) {
       // Return a mock socket if initialization fails
       return {
         emit: () => {},
@@ -27,7 +28,7 @@ export function getSocket() {
         off: () => {},
         disconnect: () => {},
         connected: false,
-      } as Socket;
+      } as any as Socket;
     }
   }
   return socket;
