@@ -988,8 +988,13 @@ router.get("/:groupId/roulette/bets", async (req, res) => {
     orderBy: { createdAt: "asc" },
   });
 
+  // Calculate seconds left for polling
+  const result = round.result as { bettingEndsAt?: number } | null;
+  const bettingEndsAt = result?.bettingEndsAt;
+  const secondsLeft = bettingEndsAt ? Math.max(0, Math.ceil((bettingEndsAt - Date.now()) / 1000)) : null;
+
   return res.json({
-    round: { id: round.id, result: round.result },
+    round: { id: round.id, result: round.result, secondsLeft },
     bets: bets.map((b: any) => ({
       id: b.id,
       userId: b.userId,
@@ -997,6 +1002,57 @@ router.get("/:groupId/roulette/bets", async (req, res) => {
       amountMinor: b.amountMinor,
       selection: b.selection,
     })),
+  });
+});
+
+// Polling endpoint for roulette state (replaces Socket.IO)
+router.get("/:groupId/roulette/state", async (req, res) => {
+  const groupId = req.params.groupId;
+  const userId = (req as unknown as AuthedRequest).userId;
+  try {
+    await ensureMembership(groupId, userId);
+  } catch (error) {
+    return res.status(403).json({ error: (error as Error).message });
+  }
+
+  const round = await prisma.gameRound.findFirst({
+    where: { groupId, gameType: "ROULETTE" },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!round) {
+    return res.json({ round: null, secondsLeft: null });
+  }
+
+  const result = round.result as { bettingEndsAt?: number; color?: string; stopRotationDeg?: number; wheelIndex?: number; winningNumber?: number } | null;
+  const bettingEndsAt = result?.bettingEndsAt;
+  const secondsLeft = bettingEndsAt ? Math.max(0, Math.ceil((bettingEndsAt - Date.now()) / 1000)) : null;
+
+  // If round is finished, return the result
+  if (round.status === "FINISHED" && result) {
+    return res.json({
+      round: {
+        id: round.id,
+        status: round.status,
+        finishedAt: round.finishedAt,
+        result: {
+          color: result.color,
+          stopRotationDeg: result.stopRotationDeg,
+          wheelIndex: result.wheelIndex,
+          winningNumber: result.winningNumber,
+        },
+      },
+      secondsLeft: null,
+    });
+  }
+
+  return res.json({
+    round: {
+      id: round.id,
+      status: round.status,
+      result: round.result,
+    },
+    secondsLeft,
   });
 });
 
