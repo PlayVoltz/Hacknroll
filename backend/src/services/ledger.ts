@@ -49,7 +49,7 @@ export async function applyLedgerEntry(
 }
 
 export async function applyLedgerEntries(entries: LedgerEntryInput[]) {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     for (const entry of entries) {
       await applyLedgerEntry(tx, entry);
     }
