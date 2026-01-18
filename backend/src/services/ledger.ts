@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import prisma from "../db";
 
 export type LedgerEntryInput = {
@@ -7,7 +7,7 @@ export type LedgerEntryInput = {
   relatedUserId?: string | null;
   type: "BET" | "PAYOUT" | "TRANSFER" | "GAME_RESULT";
   amountMinor: number;
-  meta: Prisma.InputJsonValue;
+  meta: any;
 };
 
 type LedgerClient = Prisma.TransactionClient | PrismaClient;
