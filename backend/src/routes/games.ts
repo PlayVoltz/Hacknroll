@@ -58,13 +58,13 @@ function allPlayersMatched(players: PokerPlayerState[], currentBetMinor: number)
 
 function advancePhase(state: PokerState) {
   if (state.status === "PREFLOP") {
-    state.community.push(draw(state.deck), draw(state.deck), draw(state.deck));
+    state.community.push(drawEngine(state.deck), drawEngine(state.deck), drawEngine(state.deck));
     state.status = "FLOP";
   } else if (state.status === "FLOP") {
-    state.community.push(draw(state.deck));
+    state.community.push(drawEngine(state.deck));
     state.status = "TURN";
   } else if (state.status === "TURN") {
-    state.community.push(draw(state.deck));
+    state.community.push(drawEngine(state.deck));
     state.status = "RIVER";
   } else if (state.status === "RIVER") {
     state.status = "SHOWDOWN";
@@ -108,7 +108,7 @@ router.post("/:groupId/coinflip/play", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -162,7 +162,7 @@ router.post("/:groupId/blackjack/play", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -224,7 +224,7 @@ router.post("/:groupId/blackjack/bet", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -269,7 +269,7 @@ router.post("/:groupId/blackjack/settle", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -329,7 +329,7 @@ router.post("/:groupId/mines/start", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -385,7 +385,7 @@ router.post("/:groupId/mines/start", async (req, res) => {
 
 router.get("/:groupId/mines/active", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const round = await prisma.gameRound.findFirst({
     where: {
       groupId,
@@ -423,7 +423,7 @@ router.post("/:groupId/mines/reveal", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const round = await prisma.gameRound.findUnique({
     where: { id: parsed.data.roundId },
   });
@@ -489,7 +489,7 @@ router.post("/:groupId/mines/cashout", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const round = await prisma.gameRound.findUnique({
     where: { id: parsed.data.roundId },
   });
@@ -544,7 +544,7 @@ router.post("/:groupId/plinko/play", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -613,7 +613,7 @@ router.post("/:groupId/poker/create", async (req, res) => {
     return res.status(400).json({ error: "Invalid input" });
   }
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -694,7 +694,7 @@ router.post("/:groupId/poker/join", async (req, res) => {
     return res.status(400).json({ error: "Invalid input" });
   }
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureActiveGroup(groupId);
     await ensureMembership(groupId, userId);
@@ -798,7 +798,7 @@ router.post("/:groupId/poker/action", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const round = await prisma.gameRound.findFirst({
     where: { groupId, gameType: "POKER", status: "ACTIVE" },
     orderBy: { createdAt: "desc" },
@@ -948,7 +948,7 @@ router.post("/:groupId/roulette/bet", async (req, res) => {
   }
 
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await placeRouletteBet({
       groupId,
@@ -967,7 +967,7 @@ router.post("/:groupId/roulette/bet", async (req, res) => {
 
 router.get("/:groupId/roulette/bets", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   try {
     await ensureMembership(groupId, userId);
   } catch (error) {
@@ -990,7 +990,7 @@ router.get("/:groupId/roulette/bets", async (req, res) => {
 
   return res.json({
     round: { id: round.id, result: round.result },
-    bets: bets.map((b) => ({
+    bets: bets.map((b: any) => ({
       id: b.id,
       userId: b.userId,
       username: b.user.username,

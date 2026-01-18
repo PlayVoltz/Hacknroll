@@ -89,7 +89,7 @@ router.post("/logout", (req, res) => {
 });
 
 router.get("/me", requireAuth, async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, email: true, username: true, profileImageUrl: true },
@@ -104,7 +104,7 @@ const updateProfileSchema = z.object({
 });
 
 router.patch("/me", requireAuth, async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
 

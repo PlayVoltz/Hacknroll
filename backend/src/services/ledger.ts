@@ -1,11 +1,11 @@
-import { Prisma, PrismaClient, TransactionType } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import prisma from "../db";
 
 export type LedgerEntryInput = {
   groupId: string;
   userId: string;
   relatedUserId?: string | null;
-  type: TransactionType;
+  type: "BET" | "PAYOUT" | "TRANSFER" | "GAME_RESULT";
   amountMinor: number;
   meta: Prisma.InputJsonValue;
 };

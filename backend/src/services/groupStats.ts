@@ -10,7 +10,7 @@ export async function getLeaderboard(groupId: string) {
     orderBy: { creditsMinor: "desc" },
   });
 
-  return wallets.map((wallet, index) => ({
+  return wallets.map((wallet: any, index: number) => ({
     rank: index + 1,
     userId: wallet.userId,
     username: wallet.user.username,
@@ -71,7 +71,7 @@ export async function getGroupActivity(groupId: string) {
   });
 
   const withBalances = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: any) => {
       const sumToEntry = await prisma.transaction.aggregate({
         where: {
           groupId,
@@ -163,7 +163,7 @@ export async function getSpiderStats(groupId: string, userId: string) {
     orderBy: { createdAt: "asc" },
   });
 
-  const simpleTxs: SpiderTx[] = txs.map((t) => ({
+  const simpleTxs: SpiderTx[] = txs.map((t: any) => ({
     amountMinor: t.amountMinor,
     type: t.type,
     meta: t.meta,

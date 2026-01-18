@@ -25,7 +25,7 @@ router.post("/", async (req, res) => {
 
   const { name, durationDays, durationHours, durationMinutes, isUnlimited } =
     parsed.data;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const inviteCode = generateInviteCode();
   const totalMinutes = durationDays * 24 * 60 + durationHours * 60 + durationMinutes;
   if (!isUnlimited && totalMinutes <= 0) {
@@ -61,7 +61,7 @@ router.post("/join", async (req, res) => {
     return res.status(400).json({ error: "Invalid input" });
   }
 
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const group = await prisma.group.findUnique({
     where: { inviteCode: parsed.data.inviteCode.toUpperCase() },
   });
@@ -91,14 +91,14 @@ router.post("/join", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const memberships = await prisma.groupMember.findMany({
     where: { userId },
     include: { group: true },
   });
 
   return res.json(
-    memberships.map((membership) => ({
+    memberships.map((membership: { group: any; joinedAt: Date }) => ({
       ...membership.group,
       joinedAt: membership.joinedAt,
     })),
@@ -107,7 +107,7 @@ router.get("/", async (req, res) => {
 
 router.post("/:groupId/leave", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
 
   const membership = await prisma.groupMember.findUnique({
     where: { groupId_userId: { groupId, userId } },
@@ -142,7 +142,7 @@ router.post("/:groupId/leave", async (req, res) => {
 
 router.delete("/:groupId", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
 
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return res.status(404).json({ error: "Group not found" });
@@ -174,7 +174,7 @@ router.delete("/:groupId", async (req, res) => {
 
 router.get("/:groupId/leaderboard", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const member = await prisma.groupMember.findUnique({
     where: { groupId_userId: { groupId, userId } },
   });
@@ -187,7 +187,7 @@ router.get("/:groupId/leaderboard", async (req, res) => {
 
 router.get("/:groupId", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const member = await prisma.groupMember.findUnique({
     where: { groupId_userId: { groupId, userId } },
   });
@@ -218,7 +218,7 @@ router.get("/:groupId", async (req, res) => {
 
 router.get("/:groupId/activity", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const member = await prisma.groupMember.findUnique({
     where: { groupId_userId: { groupId, userId } },
   });
@@ -234,7 +234,7 @@ router.get("/:groupId/activity", async (req, res) => {
 
 router.get("/:groupId/members/:memberUserId/profile", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const memberUserId = req.params.memberUserId;
 
   const viewer = await prisma.groupMember.findUnique({
@@ -261,7 +261,7 @@ router.get("/:groupId/members/:memberUserId/profile", async (req, res) => {
 
 router.get("/:groupId/members/:memberUserId/spider", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const memberUserId = req.params.memberUserId;
 
   const viewer = await prisma.groupMember.findUnique({
@@ -372,7 +372,7 @@ async function requireAdmin(groupId: string, userId: string) {
 
 router.delete("/:groupId/members/:memberUserId", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
   const memberUserId = req.params.memberUserId;
 
   try {
@@ -406,7 +406,7 @@ router.delete("/:groupId/members/:memberUserId", async (req, res) => {
 
 router.delete("/:groupId", async (req, res) => {
   const groupId = req.params.groupId;
-  const userId = (req as AuthedRequest).userId;
+  const userId = (req as unknown as AuthedRequest).userId;
 
   try {
     await requireAdmin(groupId, userId);
